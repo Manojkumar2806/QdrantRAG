@@ -1,0 +1,20 @@
+fastapi
+uvicorn[standard]
+qdrant-client==1.7.3
+fastembed
+python-multipart
+PyPDF2
+python-docx
+python-pptx
+pandas
+openpyxl
+requests
+beautifulsoup4
+lxml
+SpeechRecognition
+pydub
+pillow
+dspy
+
+
+# pip install fastapi "uvicorn[standard]" qdrant-client==1.7.3 fastembed python-multipart PyPDF2 python-docx python-pptx pandas openpyxl requests beautifulsoup4 lxml SpeechRecognition pydub pillow dspy

@@ -1,0 +1,23 @@
+[
+    {
+      "id": 1,
+      "text": "Patient with fever, headache, body pain for 3 days. Diagnosed as viral fever. Recommended rest, hydration, paracetamol."
+    },
+    {
+      "id": 2,
+      "text": "Patient with chest tightness, breathlessness while walking. Possible cardiac issue. Advised immediate ER visit."
+    },
+    {
+      "id": 3,
+      "text": "Patient with stomach pain after eating street food. Diagnosed as gastric infection. ORS, probiotics recommended."
+    },
+    {
+      "id": 4,
+      "text": "Patient with persistent cough and weight loss. Suggested TB testing and chest X-ray."
+    },
+    {
+      "id": 5,
+      "text": "Patient with dizziness, low BP, dehydration. Recommended ORS, salts, monitor vitals."
+    }
+  ]
+  
