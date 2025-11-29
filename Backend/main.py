@@ -11,6 +11,7 @@ except Exception:
 # Use relative imports so package mode works
 from routes.chat import router as chat_router
 from routes.system import router as system_router
+from routes.medical import router as medical_router
 
 app = FastAPI(title="MedSage API — Memory-First Medical Reasoning")
 
@@ -24,8 +25,9 @@ app.add_middleware(
 )
 
 # Mount routers under /api
-app.include_router(chat_router, prefix="/api", tags=["chat"])
-app.include_router(system_router, prefix="/api", tags=["system"])
+app.include_router(chat_router, prefix="/api/chat", tags=["chat"])
+app.include_router(system_router, prefix="/api/system", tags=["system"])
+app.include_router(medical_router, prefix="/api/medical", tags=["medical"])
 
 @app.get("/")
 def root():
