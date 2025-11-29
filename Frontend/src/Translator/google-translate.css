@@ -1,0 +1,30 @@
+/* src/Translator/google-translate.css */
+
+/* Hide the native Google Translate UI elements (we use our own) */
+.goog-te-combo {
+  display: none !important;
+}
+
+/* Hide the widget container (we keep it in DOM because google script expects it) */
+#google_translate_element {
+  display: none !important;
+}
+
+/* Ensure our select and its children are not auto-translated */
+.notranslate, .notranslate * {
+  translate: no !important;
+}
+
+/* Simple default styling for the select — adjust to match your design */
+.lang-select {
+  background: #fff;
+  color: #111;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Navbar helpers if you place the select in a top-right navbar */
+.lang-container { display:flex; align-items:center; gap:10px; }
