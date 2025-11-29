@@ -13,6 +13,7 @@ const navItems = [
   { id: 'technology', label: 'Technology' },
   { id: 'about', label: 'About' },
   { id: 'contact', label: 'Contact' },
+  { id: 'filechatpro', label: 'FileChatPro' },
 ];
 
 export default function Navigation({ currentPage, onNavigate }: NavigationProps) {

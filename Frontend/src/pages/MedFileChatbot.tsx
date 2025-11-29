@@ -449,7 +449,7 @@ export default function MedFileChatbot(): JSX.Element {
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center space-x-2 mb-4">
                   <Brain className="w-5 h-5 text-teal-600" />
-                  <h3 className="font-bold text-gray-900">Next Questions</h3>
+                  <h3 className="font-bold text-gray-900">AI Suggestion Questions</h3>
                 </div>
                 {showReasoning && suggestions.length > 0 ? (
                   <div className="space-y-3">

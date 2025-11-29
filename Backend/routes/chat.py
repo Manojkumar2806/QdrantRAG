@@ -92,7 +92,7 @@ async def ask(req: AskRequest):
     context = "\n\n".join((getattr(p, "payload", {}).get("text", "") for p in results))
     answer = ask_perplexity(f"Context:\n{context}\n\nQuestion: {req.question}\nAnswer clearly:")
 
-    raw = ask_perplexity(f"Give exactly 3 smart follow-up questions for:\n\nUser: {req.question}\nContent: {context[:6000]}")
+    raw = ask_perplexity(f"Give exactly 3 smart follow-up very short questions for:\n\nUser: {req.question}\nContent: {context[:6000]}")
     suggested = []
     for line in raw.split("\n"):
         line = line.strip()

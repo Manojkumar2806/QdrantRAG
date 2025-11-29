@@ -8,6 +8,7 @@ import Technology from './pages/Technology';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
+import FileChatPro from "./pages/FileChatPro";
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -30,6 +31,8 @@ function App() {
         return <About onNavigate={handleNavigate} />;
       case 'contact':
         return <Contact />;
+      case 'filechatpro':
+        return <FileChatPro />;
       case 'privacy':
         return <Privacy />;
       default:
