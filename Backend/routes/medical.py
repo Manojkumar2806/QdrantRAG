@@ -49,8 +49,8 @@ router = APIRouter()
 ALLOWED_EXTS = {"pdf", "docx", "png", "jpg", "jpeg", "webp"}
 
 PREDEFINED_SUGGESTIONS = [
-    "Summarize the given medical document.",
-    "Give the overview of the medical document?",
+    "Summarize the given given document.",
+    "Give the overview of the given document?",
     "What are the key findings from the document?"
 ]
 
@@ -164,7 +164,6 @@ async def upload_file(file: UploadFile = File(...)):
 # ---------------------------- ASK --------------------------------
 @router.post("/ask")
 async def ask(req: AskRequest):
-
     qvec = list(EMBEDDING.embed([req.question]))[0]
     results = CLIENT.search(
         collection_name=COLLECTION_NAME,
@@ -180,12 +179,21 @@ async def ask(req: AskRequest):
             req.question
         ])
         answer = resp.text.strip() if resp and resp.text else "Unable to answer."
+        
+        # Generate dynamic suggestions even for no results
+        context = "No documents available."
+        sugg_resp = GEMINI.generate_content([
+            "Generate exactly 3 smart short follow-up questions based on this medical question.",
+            f"Original question: {req.question}"
+        ])
+        suggested = parse_suggestions(sugg_resp.text)
+        
         return {
             "question": req.question,
             "answer": answer,
             "sources": [],
             "source_type": "LLM",
-            "suggested_questions": PREDEFINED_SUGGESTIONS
+            "suggested_questions": suggested
         }
 
     # Build context
@@ -206,6 +214,15 @@ async def ask(req: AskRequest):
 
         context += text + "\n\n"
 
+    # Generate dynamic suggestions FIRST (works for all cases)
+    sugg_resp = GEMINI.generate_content([
+        "Generate exactly 3 smart, specific follow-up short questions for this medical query. "
+        "Make them relevant to the context and question. Number them 1., 2., 3.",
+        f"Context (from medical documents):\n{context[:4000]}",
+        f"User Question: {req.question}"
+    ])
+    suggested_questions = parse_suggestions(sugg_resp.text)
+
     # Weak retrieval → fallback LLM
     if max_score < 0.15:
         resp = GEMINI.generate_content([
@@ -220,7 +237,7 @@ async def ask(req: AskRequest):
             "answer": answer,
             "sources": sources,
             "source_type": "LLM_FALLBACK",
-            "suggested_questions": PREDEFINED_SUGGESTIONS
+            "suggested_questions": suggested_questions
         }
 
     # Strong retrieval → RAG answer
@@ -237,9 +254,29 @@ async def ask(req: AskRequest):
         "answer": answer,
         "sources": sources,
         "source_type": "DOCUMENT",
-        "suggested_questions": PREDEFINED_SUGGESTIONS
+        "suggested_questions": suggested_questions
     }
 
+def parse_suggestions(raw_text: str) -> List[str]:
+    """Parse Gemini response to extract exactly 3 clean questions."""
+    suggested = []
+    lines = raw_text.split("\n")
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith(("1.", "2.", "3.", "1)", "2)", "3)")) and len(suggested) < 3:
+            # Extract question after numbering
+            parts = line.split(maxsplit=1)
+            q = parts[1] if len(parts) > 1 else line[2:]
+            q = q.strip(" .)\"'").strip()
+            if len(q) > 8:  # Ensure meaningful length
+                suggested.append(q)
+    
+    # Fallback if parsing fails
+    while len(suggested) < 3:
+        suggested.append("What are the treatment options?")
+    
+    return suggested[:3]
 
 # ---------------------------- CLEAR --------------------------------
 @router.post("/clear")
