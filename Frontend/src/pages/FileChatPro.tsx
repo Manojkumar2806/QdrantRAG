@@ -366,7 +366,7 @@ export default function FileChatPro() {
                         <div className="flex justify-start">
                           <div className="bg-gray-100 rounded-3xl px-8 py-5 flex items-center gap-4">
                             <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
-                            <span className="text-gray-700 font-medium">Thinking deeply...</span>
+                            <span className="text-gray-700 font-medium">Fetching results from Qdrant (:memory)...</span>
                           </div>
                         </div>
                       )}

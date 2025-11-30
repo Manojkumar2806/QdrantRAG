@@ -1,9 +1,8 @@
 // src/components/Navigation.tsx
 import { useState } from 'react';
-import { Menu, X, Brain } from 'lucide-react';
+import { Menu, X, Brain, PhoneCall } from 'lucide-react';
 
 // IMPORT TRANSLATOR COMPONENTS
-// Make sure these files exist: src/Translator/TranslateWidget.jsx and src/Translator/CustomLangSelect.jsx
 import TranslateWidget from '../Translator/TranslateWidget';
 import CustomLangSelect from '../Translator/CustomLangSelect';
 
@@ -65,11 +64,26 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
                   {item.label}
                 </button>
               ))}
+
               <button
                 onClick={() => handleNavigation('privacy')}
                 className="ml-2 px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
               >
                 Privacy
+              </button>
+
+              {/* SOS PAGE BUTTON (desktop) */}
+              <button
+                onClick={() => handleNavigation('sos')}
+                className={`ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all duration-200
+                  ${
+                    currentPage === 'sos'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-red-500 text-white hover:bg-red-600'
+                  }`}
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>SOS</span>
               </button>
             </div>
 
@@ -77,7 +91,6 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
             <div className="h-6 w-px bg-gray-200 mx-2" />
 
             {/* TRANSLATOR: hidden widget + custom select */}
-            {/* TranslateWidget must be present (kept hidden via CSS). CustomLangSelect shows the dropdown. */}
             <div className="flex items-center gap-2">
               <TranslateWidget />
               <div className="notranslate">
@@ -88,7 +101,6 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
 
           {/* Mobile menu toggle */}
           <div className="flex items-center md:hidden">
-            {/* Keep translator in mobile menu below (so we don't show it in header on tiny screens) */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -119,6 +131,7 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
                 {item.label}
               </button>
             ))}
+
             <button
               onClick={() => handleNavigation('privacy')}
               className="w-full text-left px-4 py-3 text-sm text-gray-500 hover:bg-gray-50 rounded-lg transition-colors"
@@ -126,8 +139,22 @@ export default function Navigation({ currentPage, onNavigate }: NavigationProps)
               Privacy
             </button>
 
+            {/* SOS PAGE BUTTON (mobile) */}
+            <button
+              onClick={() => handleNavigation('sos')}
+              className={`w-full text-left px-4 py-3 mt-1 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all duration-200
+                ${
+                  currentPage === 'sos'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-red-500 text-white hover:bg-red-600'
+                }`}
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>SOS</span>
+            </button>
+
             {/* TRANSLATOR in mobile menu */}
-            <div className="mt-2 px-4">
+            <div className="mt-3 px-4">
               <div className="text-xs text-gray-500 mb-2">Language</div>
               <div className="notranslate">
                 <TranslateWidget />

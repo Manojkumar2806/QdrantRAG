@@ -1,29 +1,7 @@
-// MedChatbot.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Brain, ChevronRight, Pause, Play, StopCircle, RotateCw, AlertOctagon } from "lucide-react";
+import { Send, Loader2, ChevronRight, Pause, Play, StopCircle, RotateCw, AlertTriangle, Activity, Trash2, Download, Copy, Check, Mic, MicOff, Settings, BarChart3, Clock } from "lucide-react";
 
-/**
- * MedChatbot.jsx
- *
- * - Sends user input as `symptoms` to backend `/consult` endpoint.
- * - Expects response:
- *   {
- *     reasoning: string,
- *     diagnosis: string | string[],
- *     recommendations: string | string[],
- *     danger_signs: string | string[],
- *     next_questions: string[],
- *     is_emergency: boolean
- *   }
- *
- * - Auto-plays TTS for assistant outputs.
- * - Follow-up (next_questions) are clickable and auto-submitted.
- * - Includes TTS controls: pause/resume, stop, replay last assistant message.
- *
- * Usage: place this component where you had your MedChatbot previously.
- */
-
-const API_PREFIX = "http://localhost:8000/api/chat"; // backend base
+const API_PREFIX = "http://localhost:8000/api/chat";
 const CONSULT_URL = `${API_PREFIX}/consult`;
 
 export default function MedChatbot() {
@@ -37,14 +15,30 @@ export default function MedChatbot() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [nextQuestions, setNextQuestions] = useState([]); // dynamic follow-ups from server
-  const [lastResponse, setLastResponse] = useState(null); // store last server payload
+  const [nextQuestions, setNextQuestions] = useState([]);
+  const [lastResponse, setLastResponse] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [sessionStats, setSessionStats] = useState({ consultations: 0, avgTime: 0 });
+  const [showStats, setShowStats] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [autoTTS, setAutoTTS] = useState(true);
+  const [consultationTimes, setConsultationTimes] = useState([]);
   const synthRef = useRef(window.speechSynthesis);
   const utterRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
-  // helper: simple HTML-safe formatting for server text (supports **bold** and *italic*)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const inlineFormat = (text = "") => {
     if (!text) return "";
     const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -90,52 +84,48 @@ export default function MedChatbot() {
   };
 
   const replayLastAssistant = () => {
-    // find last assistant message content (composed from payload)
     const last = [...messages].reverse().find((m) => m.role === "assistant");
     if (last?.content) speakText(stripHtml(last.content || ""));
   };
 
   const stripHtml = (html = "") => {
-    // used to create plain text for TTS
     const tmp = document.createElement("div");
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || "";
   };
 
-  // build an assistant message from server payload
   const buildAssistantContent = (payload) => {
-    // payload: reasoning, diagnosis, recommendations, danger_signs, next_questions, is_emergency
     const blocks = [];
 
     if (payload.is_emergency) {
-      blocks.push(`<p><strong style="color:#b91c1c">⚠️ Possible emergency — escalate immediately.</strong></p>`);
+      blocks.push(`<div class="emergency-badge"><strong>⚠️ POSSIBLE EMERGENCY — ESCALATE IMMEDIATELY</strong></div>`);
     }
 
     if (payload.diagnosis) {
       const diag = Array.isArray(payload.diagnosis) ? payload.diagnosis.join("; ") : payload.diagnosis;
-      blocks.push(`<h4 style="margin:6px 0 4px 0">Diagnosis</h4><p>${inlineFormat(diag)}</p>`);
+      blocks.push(`<div class="section"><div class="section-title">Diagnosis</div><div class="section-content">${inlineFormat(diag)}</div></div>`);
     }
 
     if (payload.reasoning) {
-      blocks.push(`<h4 style="margin:6px 0 4px 0">Reasoning</h4><p>${inlineFormat(payload.reasoning)}</p>`);
+      blocks.push(`<div class="section"><div class="section-title">Clinical Reasoning</div><div class="section-content">${inlineFormat(payload.reasoning)}</div></div>`);
     }
 
     if (payload.recommendations) {
       const rec = Array.isArray(payload.recommendations) ? payload.recommendations.map((r) => `• ${r}`).join("<br/>") : payload.recommendations;
-      blocks.push(`<h4 style="margin:6px 0 4px 0">Recommendations</h4><p>${inlineFormat(rec)}</p>`);
+      blocks.push(`<div class="section"><div class="section-title">Recommendations</div><div class="section-content">${inlineFormat(rec)}</div></div>`);
     }
 
     if (payload.danger_signs) {
       const ds = Array.isArray(payload.danger_signs) ? payload.danger_signs.map((d) => `• ${d}`).join("<br/>") : payload.danger_signs;
-      blocks.push(`<h4 style="margin:6px 0 4px 0">Danger signs</h4><p style="color:#b91c1c">${inlineFormat(ds)}</p>`);
+      blocks.push(`<div class="section danger"><div class="section-title">Danger Signs</div><div class="section-content">${inlineFormat(ds)}</div></div>`);
     }
 
-    return blocks.join("<hr style='margin:8px 0'/>");
+    return blocks.join("");
   };
 
-  // send consult request to backend
   const consult = async (symptoms) => {
     setIsLoading(true);
+    const startTime = Date.now();
     try {
       const resp = await fetch(CONSULT_URL, {
         method: "POST",
@@ -147,7 +137,16 @@ export default function MedChatbot() {
         throw new Error(t || "Server error");
       }
       const data = await resp.json();
-      // build content and push assistant message
+      const endTime = Date.now();
+      const timeTaken = ((endTime - startTime) / 1000).toFixed(1);
+      
+      // Update stats
+      setConsultationTimes(prev => [...prev, parseFloat(timeTaken)]);
+      setSessionStats(prev => ({
+        consultations: prev.consultations + 1,
+        avgTime: [...consultationTimes, parseFloat(timeTaken)].reduce((a, b) => a + b, 0) / (consultationTimes.length + 1)
+      }));
+
       const contentHtml = buildAssistantContent(data);
       const assistantMsg = {
         id: Date.now().toString(),
@@ -159,13 +158,13 @@ export default function MedChatbot() {
           danger_signs: data.danger_signs,
           reasoning: data.reasoning,
           is_emergency: data.is_emergency,
+          responseTime: timeTaken
         },
       };
       setMessages((s) => [...s, assistantMsg]);
       setNextQuestions(Array.isArray(data.next_questions) ? data.next_questions : []);
       setLastResponse(data);
 
-      // Auto TTS: speak a cleaned version — prefer short summary if available
       const ttsText = [
         data.diagnosis ? (Array.isArray(data.diagnosis) ? data.diagnosis.join(", ") : data.diagnosis) : null,
         data.recommendations ? (Array.isArray(data.recommendations) ? data.recommendations.join(". ") : data.recommendations) : null,
@@ -174,39 +173,113 @@ export default function MedChatbot() {
         .filter(Boolean)
         .join(". ");
 
-      // fallback to reasoning if ttsText empty
-      speakText(ttsText || (typeof data.reasoning === "string" ? data.reasoning : JSON.stringify(data.reasoning || "")));
+      if (autoTTS) {
+        speakText(ttsText || (typeof data.reasoning === "string" ? data.reasoning : JSON.stringify(data.reasoning || "")));
+      }
     } catch (err) {
-      const errMsg = { id: Date.now().toString(), role: "assistant", content: `<p style="color:#b91c1c">Error: ${String(err.message || err)}</p>` };
+      const errMsg = { id: Date.now().toString(), role: "assistant", content: `<div class="error-message">Error: ${String(err.message || err)}</div>` };
       setMessages((s) => [...s, errMsg]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // handle user send
   const handleSend = () => {
     if (!input.trim()) return;
     const q = input.trim();
-    // add user bubble
     setMessages((s) => [...s, { id: Date.now().toString(), role: "user", content: escapeHtml(q) }]);
     setInput("");
     consult(q);
   };
 
-  // when user clicks suggested follow-up
   const handlePickFollowUp = (q) => {
     if (!q) return;
-    // show as user msg and immediately call consult
     setMessages((s) => [...s, { id: Date.now().toString(), role: "user", content: escapeHtml(q) }]);
     consult(q);
+  };
+
+  const clearChat = () => {
+    if (confirm("Are you sure you want to clear the chat history?")) {
+      setMessages([
+        {
+          id: "sys-1",
+          role: "assistant",
+          content: "Chat cleared. How can I assist you today?",
+          meta: null,
+        },
+      ]);
+      setNextQuestions([]);
+      setLastResponse(null);
+      stopSpeech();
+      setSessionStats({ consultations: 0, avgTime: 0 });
+      setConsultationTimes([]);
+    }
+  };
+
+  const exportChat = () => {
+    const chatText = messages
+      .map((m) => {
+        const content = stripHtml(m.content);
+        return `[${m.role.toUpperCase()}]: ${content}`;
+      })
+      .join("\n\n");
+
+    const blob = new Blob([chatText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `medsage-consultation-${new Date().toISOString().split("T")[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyMessage = (content, id) => {
+    const text = stripHtml(content);
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const toggleVoiceInput = () => {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      alert("Voice input is not supported in your browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join("");
+        setInput(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    }
   };
 
   const escapeHtml = (str = "") => {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
   };
 
-  // small keyboard helper
   const onKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -214,106 +287,318 @@ export default function MedChatbot() {
     }
   };
 
-  // clean up speech on unmount
   useEffect(() => {
     return () => {
       if (synthRef.current && synthRef.current.speaking) synthRef.current.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
     };
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-[700px]">
-      <div className="px-6 py-4 border-b flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">MedSage — Live Chatbot</h3>
-          <div className="text-sm text-gray-500">Clinical assistant</div>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+      <style>{`
+        .section {
+          margin: 12px 0;
+        }
+        .section-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0f766e;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .section-content {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #374151;
+        }
+        .section.danger .section-title {
+          color: #b91c1c;
+        }
+        .section.danger .section-content {
+          color: #b91c1c;
+        }
+        .emergency-badge {
+          background: #fef2f2;
+          border-left: 4px solid #b91c1c;
+          padding: 12px;
+          margin-bottom: 12px;
+          border-radius: 6px;
+          color: #b91c1c;
+          font-size: 13px;
+        }
+        .error-message {
+          color: #b91c1c;
+          font-size: 14px;
+          padding: 12px;
+          background: #fef2f2;
+          border-radius: 6px;
+        }
+      `}</style>
 
-        <div className="flex items-center space-x-3">
-          <button onClick={replayLastAssistant} title="Re-read last assistant reply" className="p-2 rounded-md bg-gray-50 hover:bg-gray-100">
-            <RotateCw className="w-4 h-4 text-teal-600" />
-          </button>
-
-          <button onClick={togglePauseResume} disabled={!isSpeaking && !isPaused} title={isPaused ? "Resume" : "Pause"} className="p-2 rounded-md bg-gray-50 hover:bg-gray-100">
-            {isPaused ? <Play className="w-4 h-4 text-yellow-600" /> : <Pause className="w-4 h-4 text-yellow-600" />}
-          </button>
-
-          <button onClick={stopSpeech} title="Stop" className="p-2 rounded-md bg-gray-50 hover:bg-gray-100">
-            <StopCircle className="w-4 h-4 text-red-600" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] rounded-2xl px-6 py-4 ${m.role === "user" ? "bg-gradient-to-br from-teal-600 to-teal-700 text-white" : "bg-gray-100 text-gray-900"}`}>
-              {m.role === "assistant" ? (
-                <div dangerouslySetInnerHTML={{ __html: m.content }} />
-              ) : (
-                <p className="leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: m.content }} />
-              )}
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col" style={{ height: "85vh", maxHeight: "800px" }}>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <Activity className="w-6 h-6 text-teal-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">MedSage</h1>
+                <p className="text-xs text-teal-100">Clinical Decision Support</p>
+              </div>
             </div>
-          </div>
-        ))}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-2xl px-6 py-3 flex items-center space-x-3">
-              <Loader2 className="w-4 h-4 text-teal-600 animate-spin" />
-              <span className="text-gray-600">Analyzing symptoms…</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-gray-200 p-4">
-        {/* follow-ups */}
-        <div className="flex space-x-2 mb-3">
-          {nextQuestions && nextQuestions.length > 0 ? (
-            nextQuestions.map((q, i) => (
+            <div className="flex items-center space-x-2">
               <button
-                key={i}
-                onClick={() => handlePickFollowUp(q)}
-                className="flex-1 text-xs px-3 py-2 border rounded-xl text-gray-700 bg-gray-50 hover:shadow-sm flex items-center gap-2"
+                onClick={() => setShowStats(!showStats)}
+                title="View statistics"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
               >
-                <ChevronRight className="w-5 h-5 text-teal-600" />
-                <span className="truncate">{q}</span>
+                <BarChart3 className="w-4 h-4 text-white" />
               </button>
-            ))
-          ) : (
-            // show some default predictive prompts
-            ["Could you summarize the patient history?", "What are the top 3 differential diagnoses?", "Recommend initial tests to order."].map((q, i) => (
-              <button key={i} onClick={() => setInput(q)} className="flex-1 text-xs px-3 py-2 border rounded-xl text-gray-700 bg-gray-50 hover:shadow-sm">
-                <ChevronRight className="w-4 h-4 text-teal-600" />
-                <span className="truncate">{q}</span>
+
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                title="Settings"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-white" />
               </button>
-            ))
-          )}
+
+              <button
+                onClick={exportChat}
+                title="Export chat"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <Download className="w-4 h-4 text-white" />
+              </button>
+
+              <button
+                onClick={clearChat}
+                title="Clear chat"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </button>
+
+              <div className="w-px h-6 bg-white/30"></div>
+
+              <button
+                onClick={replayLastAssistant}
+                title="Replay last response"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <RotateCw className="w-4 h-4 text-white" />
+              </button>
+
+              <button
+                onClick={togglePauseResume}
+                disabled={!isSpeaking && !isPaused}
+                title={isPaused ? "Resume" : "Pause"}
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-40"
+              >
+                {isPaused ? <Play className="w-4 h-4 text-white" /> : <Pause className="w-4 h-4 text-white" />}
+              </button>
+
+              <button
+                onClick={stopSpeech}
+                title="Stop playback"
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+              >
+                <StopCircle className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* input */}
-        <div className="flex space-x-2">
-          <textarea
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Describe symptoms, signs, vitals, labs... (press Enter to send)"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-          <button onClick={handleSend} disabled={!input.trim() || isLoading} className="px-5 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold disabled:opacity-50">
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* small emergency badge if last response indicates emergency */}
+        {/* Emergency Alert */}
         {lastResponse?.is_emergency && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-red-700">
-            <AlertOctagon className="w-4 h-4 text-red-700" />
-            <span><strong>Emergency flag:</strong> signs of deterioration detected — escalate immediately and call for in-person assessment.</span>
+          <div className="bg-red-50 border-b border-red-200 px-6 py-3 flex items-start space-x-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-900">Emergency Alert</p>
+              <p className="text-xs text-red-700 mt-1">Signs of deterioration detected. Immediate escalation and in-person assessment required.</p>
+            </div>
           </div>
         )}
+
+        {/* Statistics Panel */}
+        {showStats && (
+          <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-b border-teal-200 px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-teal-900 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Session Statistics
+              </h3>
+              <button onClick={() => setShowStats(false)} className="text-xs text-teal-600 hover:text-teal-800">Close</button>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Consultations</p>
+                <p className="text-2xl font-bold text-teal-600">{sessionStats.consultations}</p>
+              </div>
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Avg Response Time</p>
+                <p className="text-2xl font-bold text-teal-600">{sessionStats.avgTime.toFixed(1)}s</p>
+              </div>
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <p className="text-xs text-gray-600 mb-1">Messages</p>
+                <p className="text-2xl font-bold text-teal-600">{messages.length}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
+              </h3>
+              <button onClick={() => setShowSettings(false)} className="text-xs text-gray-600 hover:text-gray-800">Close</button>
+            </div>
+            <div className="space-y-3">
+              <label className="flex items-center justify-between bg-white rounded-lg p-3 cursor-pointer hover:bg-gray-50">
+                <span className="text-sm text-gray-700">Auto-play TTS</span>
+                <input
+                  type="checkbox"
+                  checked={autoTTS}
+                  onChange={(e) => setAutoTTS(e.target.checked)}
+                  className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50">
+          <div className="space-y-4">
+            {messages.map((m) => (
+              <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className="group relative max-w-[75%]">
+                  <div
+                    className={`rounded-2xl px-5 py-4 shadow-sm ${
+                      m.role === "user"
+                        ? "bg-gradient-to-br from-teal-600 to-teal-700 text-white"
+                        : "bg-white border border-gray-200 text-gray-900"
+                    }`}
+                  >
+                    {m.role === "assistant" ? (
+                      <div>
+                        <div dangerouslySetInnerHTML={{ __html: m.content }} />
+                        {m.meta?.responseTime && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                            <Clock className="w-3 h-3" />
+                            <span>Response time: {m.meta.responseTime}s</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: m.content }} />
+                    )}
+                  </div>
+                  {m.role === "assistant" && (
+                    <button
+                      onClick={() => copyMessage(m.content, m.id)}
+                      className="absolute -right-10 top-2 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Copy message"
+                    >
+                      {copiedId === m.id ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-gray-200 rounded-2xl px-5 py-3 flex items-center space-x-3 shadow-sm">
+                  <Loader2 className="w-4 h-4 text-teal-600 animate-spin" />
+                  <span className="text-sm text-gray-600">Fetching results from Qdrant Cloud...</span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-white border-t border-gray-200 px-6 py-4">
+          {/* Quick Actions */}
+          {nextQuestions && nextQuestions.length > 0 ? (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Suggested Follow-ups</p>
+              <div className="flex flex-wrap gap-2">
+                {nextQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePickFollowUp(q)}
+                    className="text-xs px-4 py-2 bg-teal-50 text-teal-700 rounded-full hover:bg-teal-100 transition-colors flex items-center space-x-1 border border-teal-200"
+                  >
+                    <ChevronRight className="w-3 h-3" />
+                    <span>{q}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Quick Actions</p>
+              <div className="flex flex-wrap gap-2">
+                {["I have fever for 3 days, what should I do?","My ankle is swollen after a twist, any quick advice?", "I have a headache with nausea since yesterday, what can I do?"].map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setInput(q)}
+                    className="text-xs px-4 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors border border-gray-300"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Input Box */}
+          <div className="flex space-x-3">
+            <button
+              onClick={toggleVoiceInput}
+              className={`px-4 rounded-xl font-semibold transition-all flex items-center justify-center ${
+                isListening
+                  ? "bg-red-500 text-white animate-pulse"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              title={isListening ? "Stop recording" : "Voice input"}
+            >
+              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
+            <textarea
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Describe symptoms, clinical findings, or paste notes..."
+              className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-teal-500 resize-none text-sm"
+              style={{ minHeight: "48px", maxHeight: "120px" }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="px-6 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all flex items-center justify-center"
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

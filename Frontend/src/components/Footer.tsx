@@ -1,4 +1,4 @@
-import { Brain, Github, Mail } from 'lucide-react';
+import { Brain, Github, Mail, Linkedin } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -53,13 +53,22 @@ export default function Footer({ onNavigate }: FooterProps) {
             </ul>
             <div className="flex items-center space-x-4 mt-6">
               <a
-                href="https://github.com"
+                href="https://github.com/Manojkumar2806"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-teal-400 transition-colors"
                 aria-label="GitHub"
               >
                 <Github className="w-5 h-5" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/manoj-kumar-pendem/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-teal-400 transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-5 h-5" />
               </a>
               <button
                 onClick={() => onNavigate('contact')}

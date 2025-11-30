@@ -204,7 +204,7 @@ export default function Contact() {
                 href="tel:+15551234567"
                 className="text-teal-600 hover:text-teal-700 transition-colors"
               >
-                +1 (555) 123-4567
+                +19 9014759694
               </a>
               <p className="text-sm text-gray-600 mt-2">
                 Mon-Fri, 9am-5pm EST
@@ -217,31 +217,15 @@ export default function Contact() {
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Visit Us</h3>
               <p className="text-gray-700 leading-relaxed">
-                123 Healthcare Innovation Blvd
+                Healthcare Innovation Blvd
                 <br />
-                San Francisco, CA 94102
-                <br />
-                United States
+                Madanapalle, AP 517325
+                <br />                
+                India
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-50 to-white rounded-2xl border border-teal-200 p-6">
-              <h3 className="font-bold text-gray-900 mb-3">Office Hours</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Monday - Friday</span>
-                  <span className="text-gray-900 font-medium">9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Saturday</span>
-                  <span className="text-gray-900 font-medium">10:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sunday</span>
-                  <span className="text-gray-900 font-medium">Closed</span>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

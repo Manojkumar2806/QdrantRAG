@@ -410,7 +410,7 @@ export default function MedFileChatbot(): JSX.Element {
                         <div className="flex justify-start">
                           <div className="bg-gray-100 rounded-2xl px-6 py-4 flex items-center space-x-3">
                             <Loader2 className="w-5 h-5 text-teal-600 animate-spin" />
-                            <span className="text-gray-600">Analyzing with DSPy reasoning...</span>
+                            <span className="text-gray-600">Fetching results from Qdrant (:memory)...</span>
                           </div>
                         </div>
                       )}

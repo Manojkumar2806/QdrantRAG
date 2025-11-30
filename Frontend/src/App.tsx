@@ -9,6 +9,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import FileChatPro from "./pages/FileChatPro";
+import SosPage from "./pages/SosPage"; // <-- add this import
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -35,6 +36,8 @@ function App() {
         return <FileChatPro />;
       case 'privacy':
         return <Privacy />;
+      case 'sos':                        {/* <-- new case */}
+        return <SosPage />;
       default:
         return <Home onNavigate={handleNavigate} />;
     }
