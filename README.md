@@ -36,6 +36,25 @@ MedSage delivers three core capabilities:
 
 ---
 
+## MedSage UI Screenshots
+
+| **Home Page** | **Features** | **Language Selector** |
+|--------------|--------------|------------------------|
+| <img width="300" src="https://github.com/user-attachments/assets/a745d0d4-2199-4cee-a550-4c3fc3472c6e" /> | <img width="300" src="https://github.com/user-attachments/assets/83cf0d3d-79da-4e15-bf4a-2d9f35d20edf" /> | <img width="250" src="https://github.com/user-attachments/assets/7e4d4e41-3e5a-4190-a170-7a01b737e3cd" /> |
+
+| **Language Page** | **Processing Document** | **Medical File Chat (In-Memory)** |
+|-------------------|-------------------------|----------------------------------|
+| <img width="300" src="https://github.com/user-attachments/assets/8975ce7d-cdf1-423e-88ea-e41052508733" /> | <img width="300" src="https://github.com/user-attachments/assets/3159c913-1b13-47ee-92e6-cedb096f5469" /> | <img width="300" src="https://github.com/user-attachments/assets/21ee5225-61ab-4b01-9404-670ad5c73b9b" /> |
+
+| **Medical Reasoning (Cloud)** | **Universal File RAG Upload** | **Technologies Used** |
+|-------------------------------|-------------------------------|------------------------|
+| <img width="300" src="https://github.com/user-attachments/assets/895293f5-c9e2-46ec-bd3a-00690ad9d9df" /> | <img width="300" src="https://github.com/user-attachments/assets/a95236ee-ca19-49f9-a9de-44427eb60d30" /> | <img width="300" src="https://github.com/user-attachments/assets/f17bd8cb-09c3-482e-bfe5-8b708e031a5a" /> |
+
+| **RAG Pipeline** | **How MedSage Works** | **Emergency SOS** |
+|------------------|------------------------|-------------------|
+| <img width="300" src="https://github.com/user-attachments/assets/cea2e521-0377-473a-bdf2-3e9c341d44de" /> | <img width="300" src="https://github.com/user-attachments/assets/c79959f4-e5e9-4928-8eaf-1437bcb01a49" /> | <img width="300" src="https://github.com/user-attachments/assets/bb4f61a9-6497-4b2a-b708-b9188242a381" /> |
+
+
 ## 🧠 Qdrant-Powered Memory Architecture
 
 ### Qdrant Cloud (Primary Vector DB)
@@ -642,4 +661,5 @@ QDRANT_API_KEY=your_qdrant_api_key
 * **Medical advisors** for domain validation
 
 🏥 **Built with ❤️ for healthcare accessibility, emergency response, and medical intelligence.**
+
 
