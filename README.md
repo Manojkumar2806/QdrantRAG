@@ -60,12 +60,18 @@ MedSage delivers three core capabilities:
 ### Qdrant Cloud (Primary Vector DB)
 
 * **Persistent storage** for production-grade medical document vectors
+```
+client = QdrantClient(url=Qdrant_URL, api_key = Qdrant_API_KEY)
+```
 * Powers semantic search in `MedFileChatbot` and `FileChatPro`
 * Stores rich metadata: file IDs, page numbers, modality type, retrieval scores
 
 ### Qdrant In-Memory (`:memory`)
 
 * **Fast, ephemeral sessions** for interactive experimentation
+```
+CLIENT = QdrantClient(":memory")  # Rapid Prototyping
+```
 * Used in `MedFileChatbot.tsx` for quick file indexing and Q&A
 * Used in `FileChatPro.tsx` for high-speed local vector search
 * Enables per-session vector stores that reset cleanly 
@@ -300,7 +306,8 @@ MedSage supports **8 major Indian languages** to ensure accessibility for users 
 ### LLM Integration
 
 * **Google Gemini 2.5 Flash** – Primary LLM for fast reasoning and generation (medical Q&A, triage, summarization)
-* **Perplexity Sonar** – Complementary model for retrieval-augmented reasoning and external knowledge<cite repo="Manojkumar2806/QdrantRAG" path="Backend/routes/medical.py" start="19
+* **Perplexity Sonar** – Complementary model for retrieval-augmented reasoning and external knowledge
+
 
 
 
@@ -570,17 +577,18 @@ MedSage/
 
 ```bash
 git clone https://github.com/your-org/MedSage.git
-cd MedSage
+cd Backend
 pip install -r requirements.txt
-cp .env.example .env
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python scripts/setup_qdrant.py 
+python -c "from qdrant_client import QdrantClient; import inspect; print(QdrantClient); print(inspect.getfile(QdrantClient)); print('search' in dir(QdrantClient)); print('search_points' in dir(QdrantClient))"
+uvicorn main:app --reload
 ```
 
 ### Frontend Setup
 
 ```bash
 cd Frontend
-npm install
+npm install --force
 npm run dev
 ```
 
