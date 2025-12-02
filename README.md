@@ -1,5 +1,26 @@
 # MedSage 🏥 | Memory-First Medical AI with Qdrant
 
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Perplexity](https://img.shields.io/badge/Perplexity-1A2C42?style=for-the-badge&logo=perplexity&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Gemini Flash 2.5](https://img.shields.io/badge/Gemini%202.5%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Vector Database](https://img.shields.io/badge/Vector%20Database-4B8BBE?style=for-the-badge)
+![Qdrant](https://img.shields.io/badge/Qdrant-E34A86?style=for-the-badge&logo=qdrant&logoColor=white)
+![Qdrant Client](https://img.shields.io/badge/Qdrant%20Client-8A2BE2?style=for-the-badge)
+![FastEmbed](https://img.shields.io/badge/FastEmbed-0099FF?style=for-the-badge)
+![DSPy](https://img.shields.io/badge/DSPy-0A84FF?style=for-the-badge)
+![Semantic Search](https://img.shields.io/badge/Semantic%20Search-FF6F00?style=for-the-badge)
+![RAG Pipeline](https://img.shields.io/badge/RAG%20Pipeline-F97316?style=for-the-badge&logo=azurepipelines&logoColor=white)
+![Advanced RAG](https://img.shields.io/badge/Advanced%20RAG-FF8800?style=for-the-badge)
+![Perplexity AI](https://img.shields.io/badge/Perplexity%20AI-0A84FF?style=for-the-badge)
+![Perplexity Sonar](https://img.shields.io/badge/Sonar%20Model-0033FF?style=for-the-badge)
+
+
+
+
 **MedSage** is a *retrieval-first medical AI platform* that combines **live clinical consultation**, **medical document Q&A**, and **multimodal file intelligence**. Built on **Qdrant** vector database and **FastEmbed**, MedSage prioritizes semantic memory over raw model capacity, delivering context-aware medical reasoning through advanced RAG (Retrieval-Augmented Generation) pipelines.
 
 > *"Memory over models — real retrieval, real context, and real medical workflows."*
